@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마진계산기</title>
+    <!-- xlsx-js-style 라이브러리 (스타일 지원) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+            background: linear-gradient(135deg, #e0e5ec 0%, #f5f7fa 50%, #e8ecf1 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #6b7280;
+            margin-top: 8px;
+            font-size: 1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: auto auto;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .input-section {
+            grid-row: 1 / 3;
+        }
+
+        .section-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 500;
+            color: #1f2937;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #1e3a5f;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.1);
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 16px;
+            color: #9ca3af;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .toggle-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .toggle-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #e5e7eb;
+            border-radius: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #1e3a5f;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        .toggle-header input {
+            display: none;
+        }
+
+        .toggle-label {
+            font-size: 0.95em;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .toggle-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-content.active {
+            max-height: 500px;
+            margin-top: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 1200px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.2;
+        }
+
+        .metric-value.primary {
+            color: #1e3a5f;
+        }
+
+        .metric-value.success {
+            color: #10b981;
+        }
+
+        .metric-value.warning {
+            color: #f59e0b;
+        }
+
+        .metric-sub {
+            font-size: 0.75em;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .detail-section {
+            grid-column: 2;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .detail-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.9em;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row.highlight {
+            background: linear-gradient(90deg, rgba(30, 58, 95, 0.1) 0%, transparent 100%);
+            margin: 0 -12px;
+            padding: 12px;
+            border-radius: 8px;
+            border-bottom: none;
+        }
+
+        .detail-row-label {
+            color: #6b7280;
+        }
+
+        .detail-row-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .detail-row.highlight .detail-row-value {
+            color: #1e3a5f;
+        }
+
+        .analysis-box {
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.1) 0%, rgba(55, 89, 132, 0.1) 100%);
+            border: 1px solid rgba(30, 58, 95, 0.2);
+        }
+
+        .analysis-box.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .analysis-box.warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .analysis-box.danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.1) 100%);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .analysis-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .analysis-text {
+            font-size: 0.9em;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .progress-section {
+            margin-top: 24px;
+        }
+
+        .progress-item {
+            margin-bottom: 16px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .progress-label {
+            color: #6b7280;
+        }
+
+        .progress-value {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #1e3a5f 0%, #375984 100%);
+        }
+
+        .progress-fill.success {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(30, 58, 95, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 58, 95, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #fff;
+            color: #374151;
+        }
+
+        .btn-excel {
+            background: linear-gradient(135deg, #217346 0%, #2d8f5a 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(33, 115, 70, 0.3);
+        }
+
+        .btn-excel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(33, 115, 70, 0.4);
+        }
+
+        .btn-excel svg {
+            width: 18px;
+            height: 18px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .info-section {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(30, 58, 95, 0.05);
+            border-radius: 12px;
+        }
+
+        .info-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-bottom: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            font-size: 0.8em;
+        }
+
+        @media (max-width: 400px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            color: #6b7280;
+        }
+
+        .info-item span:last-child {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .section-divider {
+            margin: 50px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+        }
+
+        .section-divider-text {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .reverse-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 24px;
+            padding: 32px;
+            color: white;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+        }
+
+        .reverse-header {
+            margin-bottom: 28px;
+        }
+
+        .reverse-header h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .reverse-header p {
+            color: #94a3b8;
+            font-size: 0.95em;
+        }
+
+        .reverse-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .reverse-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .reverse-input-group {
+            margin-bottom: 20px;
+        }
+
+        .reverse-input-group label {
+            display: block;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .reverse-input-wrapper {
+            position: relative;
+        }
+
+        .reverse-input-wrapper input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 500;
+            color: #f1f5f9;
+            background: rgba(30, 41, 59, 0.8);
+            transition: all 0.2s;
+        }
+
+        .reverse-input-wrapper input:focus {
+            outline: none;
+            border-color: #818cf8;
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+        }
+
+        .reverse-input-unit {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .reverse-result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .reverse-result-card {
+            background: linear-gradient(135deg, rgba(30, 58, 95, 0.3) 0%, rgba(55, 89, 132, 0.3) 100%);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .reverse-result-card.highlight {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(52, 211, 153, 0.3) 100%);
+        }
+
+        .reverse-result-label {
+            font-size: 0.8em;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .reverse-result-value {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .reverse-result-card.highlight .reverse-result-value {
+            font-size: 2em;
+            color: #34d399;
+        }
+
+        .reverse-result-sub {
+            font-size: 0.75em;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .reverse-analysis {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border-left: 4px solid #818cf8;
+        }
+
+        .reverse-analysis-title {
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .reverse-analysis-text {
+            font-size: 0.9em;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .reverse-btn {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #1e3a5f 0%, #375984 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(30, 58, 95, 0.3);
+            margin-top: 10px;
+        }
+
+        .reverse-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 58, 95, 0.4);
+        }
+
+        .quick-select {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 8px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: #1e3a5f;
+        }
+
+        /* 푸터 */
+        .footer {
+            margin-top: 60px;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .footer .disclaimer {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .footer .company {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>마진계산기</h1>
+            <p>정확한 수익 분석으로 스마트한 의사결정</p>
+        </div>
+
+        <div class="metrics-grid" style="margin-bottom: 24px;">
+            <div class="metric-card">
+                <div class="metric-label">개당 마진</div>
+                <div class="metric-value" id="metricUnitMargin">₩0</div>
+                <div class="metric-sub">순이익</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">마진율</div>
+                <div class="metric-value primary" id="metricMarginRate">0%</div>
+                <div class="metric-sub">원가 대비</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">월 예상 수익</div>
+                <div class="metric-value success" id="metricMonthly">₩0</div>
+                <div class="metric-sub">고정비 차감 후</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">연 예상 수익</div>
+                <div class="metric-value" id="metricYearly">₩0</div>
+                <div class="metric-sub">12개월 기준</div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="glass-card input-section">
+                <div class="section-title">기본 정보</div>
+                
+                <div class="input-group">
+                    <label>매입가 (원가)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="purchasePrice" value="10000" min="0">
+                        <span class="input-unit">원</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>판매가</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="sellingPrice" value="15000" min="0">
+                        <span class="input-unit">원</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>월 판매량</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="monthlyVolume" value="100" min="0">
+                        <span class="input-unit">개</span>
+                    </div>
+                </div>
+
+                <div class="toggle-section">
+                    <div class="toggle-header" onclick="toggleSwitch('additionalCosts')">
+                        <div class="toggle-switch" id="additionalCostsSwitch"></div>
+                        <span class="toggle-label">부가비용</span>
+                        <input type="checkbox" id="additionalCostsCheck">
+                    </div>
+                    <div id="additionalCosts" class="toggle-content">
+                        <div class="input-group">
+                            <label>배송비 (개당)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="shippingCost" value="0" min="0">
+                                <span class="input-unit">원</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>포장비 (개당)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="packagingCost" value="0" min="0">
+                                <span class="input-unit">원</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>카드 수수료율</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="cardFee" value="3" min="0" max="100" step="0.1">
+                                <span class="input-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toggle-section">
+                    <div class="toggle-header" onclick="toggleSwitch('operatingCosts')">
+                        <div class="toggle-switch" id="operatingCostsSwitch"></div>
+                        <span class="toggle-label">운영비용</span>
+                        <input type="checkbox" id="operatingCostsCheck">
+                    </div>
+                    <div id="operatingCosts" class="toggle-content">
+                        <div class="input-group">
+                            <label>월 임대료</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="rent" value="0" min="0">
+                                <span class="input-unit">원</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>월 인건비</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="labor" value="0" min="0">
+                                <span class="input-unit">원</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>월 관리비</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="utilities" value="0" min="0">
+                                <span class="input-unit">원</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>월 마케팅비</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="marketing" value="0" min="0">
+                                <span class="input-unit">원</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toggle-section">
+                    <div class="toggle-header" onclick="toggleSwitch('discountTax')">
+                        <div class="toggle-switch" id="discountTaxSwitch"></div>
+                        <span class="toggle-label">할인 및 세금</span>
+                        <input type="checkbox" id="discountTaxCheck">
+                    </div>
+                    <div id="discountTax" class="toggle-content">
+                        <div class="input-group">
+                            <label>할인율</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="discountRate" value="0" min="0" max="100">
+                                <span class="input-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>부가세 포함 여부</label>
+                            <div class="input-wrapper">
+                                <select id="vatIncluded" style="width: 100%; padding: 14px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1em; background: rgba(255,255,255,0.8); color: #1f2937;">
+                                    <option value="false">부가세 미포함</option>
+                                    <option value="true">부가세 포함 (공급가액 계산)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="calculateAll()">계산하기</button>
+                    <button class="btn btn-secondary" onclick="resetAll()">초기화</button>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-excel" onclick="downloadExcel()">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12.9,14.5L15.8,19H14L12,15.6L10,19H8.2L11.1,14.5L8.2,10H10L12,13.4L14,10H15.8L12.9,14.5Z"/>
+                        </svg>
+                        엑셀 다운로드
+                    </button>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-title">📊 업종별 평균 마진율</div>
+                    <div class="info-grid">
+                        <div class="info-item"><span>의류</span><span>40-60%</span></div>
+                        <div class="info-item"><span>식품</span><span>20-30%</span></div>
+                        <div class="info-item"><span>전자</span><span>10-20%</span></div>
+                        <div class="info-item"><span>화장품</span><span>40-70%</span></div>
+                        <div class="info-item"><span>도매</span><span>5-15%</span></div>
+                        <div class="info-item"><span>소매</span><span>20-40%</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card detail-section">
+                <div class="section-title">상세 분석</div>
+                
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <div class="detail-title">💰 원가 분석</div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">매입가</span>
+                            <span class="detail-row-value" id="detailPurchase">₩0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">부가비용</span>
+                            <span class="detail-row-value" id="detailAdditional">₩0</span>
+                        </div>
+                        <div class="detail-row highlight">
+                            <span class="detail-row-label">총 원가</span>
+                            <span class="detail-row-value" id="detailTotalCost">₩0</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-title">📈 판매 분석</div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">판매가</span>
+                            <span class="detail-row-value" id="detailSelling">₩0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">실수령가</span>
+                            <span class="detail-row-value" id="detailActualSelling">₩0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">카드수수료</span>
+                            <span class="detail-row-value" id="detailCardFee">₩0</span>
+                        </div>
+                        <div class="detail-row highlight">
+                            <span class="detail-row-label">개당 순이익</span>
+                            <span class="detail-row-value" id="detailNetProfit">₩0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="operatingDetail" style="display: none; margin-top: 24px;">
+                    <div class="detail-card">
+                        <div class="detail-title">🏢 월간 수익 현황</div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">월 매출</span>
+                            <span class="detail-row-value" id="monthlyRevenue">₩0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">월 원가</span>
+                            <span class="detail-row-value" id="monthlyCost">₩0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-row-label">월 고정비</span>
+                            <span class="detail-row-value" id="monthlyFixed">₩0</span>
+                        </div>
+                        <div class="detail-row highlight">
+                            <span class="detail-row-label">월 순이익</span>
+                            <span class="detail-row-value" id="monthlyNet">₩0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-label">마진율 (원가 대비)</span>
+                            <span class="progress-value" id="progressMargin">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="marginBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-label">순이익률 (매출 대비)</span>
+                            <span class="progress-value" id="progressNet">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill success" id="netBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analysis-box" id="analysisBox">
+                    <div class="analysis-title">📊 수익성 분석</div>
+                    <div class="analysis-text" id="analysisText">
+                        입력값을 확인하고 계산하기를 눌러주세요.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-divider">
+            <span class="section-divider-text">역마진 계산기</span>
+        </div>
+
+        <div class="reverse-section">
+            <div class="reverse-header">
+                <h2>🎯 역마진 계산기</h2>
+                <p>목표 수익을 달성하기 위해 필요한 판매량을 계산합니다</p>
+            </div>
+
+            <div class="reverse-grid">
+                <div class="reverse-input-side">
+                    <div class="reverse-input-group">
+                        <label>목표 월 순수익</label>
+                        <div class="reverse-input-wrapper">
+                            <input type="number" id="targetMonthlyProfit" value="3000000" min="0">
+                            <span class="reverse-input-unit">원</span>
+                        </div>
+                        <div class="quick-select">
+                            <button class="quick-btn" onclick="setTargetProfit(1000000)">100만</button>
+                            <button class="quick-btn" onclick="setTargetProfit(3000000)">300만</button>
+                            <button class="quick-btn" onclick="setTargetProfit(5000000)">500만</button>
+                            <button class="quick-btn" onclick="setTargetProfit(10000000)">1000만</button>
+                        </div>
+                    </div>
+
+                    <div class="reverse-input-group">
+                        <label>매입가 (원가)</label>
+                        <div class="reverse-input-wrapper">
+                            <input type="number" id="revPurchasePrice" value="10000" min="0">
+                            <span class="reverse-input-unit">원</span>
+                        </div>
+                    </div>
+
+                    <div class="reverse-input-group">
+                        <label>판매가</label>
+                        <div class="reverse-input-wrapper">
+                            <input type="number" id="revSellingPrice" value="15000" min="0">
+                            <span class="reverse-input-unit">원</span>
+                        </div>
+                    </div>
+
+                    <div class="reverse-input-group">
+                        <label>개당 부가비용</label>
+                        <div class="reverse-input-wrapper">
+                            <input type="number" id="revAdditionalCost" value="0" min="0">
+                            <span class="reverse-input-unit">원</span>
+                        </div>
+                    </div>
+
+                    <div class="reverse-input-group">
+                        <label>월 고정비</label>
+                        <div class="reverse-input-wrapper">
+                            <input type="number" id="revFixedCost" value="0" min="0">
+                            <span class="reverse-input-unit">원</span>
+                        </div>
+                    </div>
+
+                    <button class="reverse-btn" onclick="calculateReverse()">필요 판매량 계산</button>
+                </div>
+
+                <div class="reverse-result-side">
+                    <div class="reverse-result-grid">
+                        <div class="reverse-result-card highlight">
+                            <div class="reverse-result-label">필요 월 판매량</div>
+                            <div class="reverse-result-value" id="revRequiredVolume">0개</div>
+                            <div class="reverse-result-sub">목표 달성을 위한 최소 판매량</div>
+                        </div>
+                        <div class="reverse-result-card">
+                            <div class="reverse-result-label">개당 마진</div>
+                            <div class="reverse-result-value" id="revUnitMargin">₩0</div>
+                        </div>
+                        <div class="reverse-result-card">
+                            <div class="reverse-result-label">마진율</div>
+                            <div class="reverse-result-value" id="revMarginRate">0%</div>
+                        </div>
+                        <div class="reverse-result-card">
+                            <div class="reverse-result-label">필요 월 매출</div>
+                            <div class="reverse-result-value" id="revRequiredRevenue">₩0</div>
+                        </div>
+                        <div class="reverse-result-card">
+                            <div class="reverse-result-label">일 평균 판매량</div>
+                            <div class="reverse-result-value" id="revDailyVolume">0개</div>
+                        </div>
+                    </div>
+
+                    <div class="reverse-analysis">
+                        <div class="reverse-analysis-title">💡 분석 및 제안</div>
+                        <div class="reverse-analysis-text" id="reverseAnalysisText">
+                            목표 수익과 제품 정보를 입력하면 필요한 판매량을 분석해 드립니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 푸터 -->
+        <div class="footer">
+            <p class="disclaimer">※ 본 자료는 참고용이며, 실제 세금 계산은 세무사와 상담하시기 바랍니다.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateAll();
+            calculateReverse();
+        });
+
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', calculateAll);
+            el.addEventListener('change', calculateAll);
+        });
+
+        function toggleSwitch(id) {
+            const checkEl = document.getElementById(id + 'Check');
+            const switchEl = document.getElementById(id + 'Switch');
+            const contentEl = document.getElementById(id);
+            
+            checkEl.checked = !checkEl.checked;
+            
+            if (checkEl.checked) {
+                switchEl.classList.add('active');
+                contentEl.classList.add('active');
+            } else {
+                switchEl.classList.remove('active');
+                contentEl.classList.remove('active');
+            }
+            
+            calculateAll();
+        }
+
+        function formatCurrency(num) {
+            return '₩' + Math.round(num).toLocaleString('ko-KR');
+        }
+
+        let calculationData = {};
+
+        function calculateAll() {
+            const purchasePrice = parseFloat(document.getElementById('purchasePrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
+            const monthlyVolume = parseFloat(document.getElementById('monthlyVolume').value) || 0;
+
+            const additionalEnabled = document.getElementById('additionalCostsCheck').checked;
+            const shippingCost = additionalEnabled ? (parseFloat(document.getElementById('shippingCost').value) || 0) : 0;
+            const packagingCost = additionalEnabled ? (parseFloat(document.getElementById('packagingCost').value) || 0) : 0;
+            const cardFeeRate = additionalEnabled ? (parseFloat(document.getElementById('cardFee').value) || 0) / 100 : 0;
+
+            const discountEnabled = document.getElementById('discountTaxCheck').checked;
+            const discountRate = discountEnabled ? (parseFloat(document.getElementById('discountRate').value) || 0) / 100 : 0;
+            const vatIncluded = document.getElementById('vatIncluded').value === 'true';
+
+            const operatingEnabled = document.getElementById('operatingCostsCheck').checked;
+            const rent = operatingEnabled ? (parseFloat(document.getElementById('rent').value) || 0) : 0;
+            const labor = operatingEnabled ? (parseFloat(document.getElementById('labor').value) || 0) : 0;
+            const utilities = operatingEnabled ? (parseFloat(document.getElementById('utilities').value) || 0) : 0;
+            const marketing = operatingEnabled ? (parseFloat(document.getElementById('marketing').value) || 0) : 0;
+
+            const additionalCost = shippingCost + packagingCost;
+            const totalCost = purchasePrice + additionalCost;
+
+            let actualSellingPrice = sellingPrice * (1 - discountRate);
+            if (vatIncluded) actualSellingPrice = actualSellingPrice / 1.1;
+
+            const cardFee = actualSellingPrice * cardFeeRate;
+            const netSellingPrice = actualSellingPrice - cardFee;
+            const unitMargin = netSellingPrice - totalCost;
+            const marginRate = totalCost > 0 ? (unitMargin / totalCost) * 100 : 0;
+
+            const monthlyRevenue = actualSellingPrice * monthlyVolume;
+            const monthlyCostTotal = totalCost * monthlyVolume;
+            const monthlyGross = unitMargin * monthlyVolume;
+            const monthlyFixed = rent + labor + utilities + marketing;
+            const monthlyNet = monthlyGross - monthlyFixed;
+            const yearlyProfit = monthlyNet * 12;
+            const netProfitRate = monthlyRevenue > 0 ? (monthlyNet / monthlyRevenue) * 100 : 0;
+
+            calculationData = {
+                purchasePrice, sellingPrice, monthlyVolume,
+                shippingCost, packagingCost, cardFeeRate: cardFeeRate * 100,
+                discountRate: discountRate * 100, vatIncluded,
+                rent, labor, utilities, marketing,
+                additionalCost, totalCost, actualSellingPrice, cardFee,
+                unitMargin, marginRate, monthlyRevenue, monthlyCostTotal,
+                monthlyGross, monthlyFixed, monthlyNet, yearlyProfit, netProfitRate,
+                additionalEnabled, operatingEnabled, discountEnabled
+            };
+
+            document.getElementById('metricUnitMargin').textContent = formatCurrency(unitMargin);
+            document.getElementById('metricMarginRate').textContent = marginRate.toFixed(1) + '%';
+            document.getElementById('metricMonthly').textContent = formatCurrency(monthlyNet);
+            document.getElementById('metricYearly').textContent = formatCurrency(yearlyProfit);
+
+            document.getElementById('detailPurchase').textContent = formatCurrency(purchasePrice);
+            document.getElementById('detailAdditional').textContent = formatCurrency(additionalCost);
+            document.getElementById('detailTotalCost').textContent = formatCurrency(totalCost);
+            document.getElementById('detailSelling').textContent = formatCurrency(sellingPrice);
+            document.getElementById('detailActualSelling').textContent = formatCurrency(actualSellingPrice);
+            document.getElementById('detailCardFee').textContent = formatCurrency(cardFee);
+            document.getElementById('detailNetProfit').textContent = formatCurrency(unitMargin);
+
+            if (operatingEnabled) {
+                document.getElementById('operatingDetail').style.display = 'block';
+                document.getElementById('monthlyRevenue').textContent = formatCurrency(monthlyRevenue);
+                document.getElementById('monthlyCost').textContent = formatCurrency(monthlyCostTotal);
+                document.getElementById('monthlyFixed').textContent = formatCurrency(monthlyFixed);
+                document.getElementById('monthlyNet').textContent = formatCurrency(monthlyNet);
+            } else {
+                document.getElementById('operatingDetail').style.display = 'none';
+            }
+
+            const marginWidth = Math.min(Math.max(marginRate, 0), 100);
+            const netWidth = Math.min(Math.max(netProfitRate, 0), 100);
+            document.getElementById('marginBar').style.width = marginWidth + '%';
+            document.getElementById('netBar').style.width = netWidth + '%';
+            document.getElementById('progressMargin').textContent = marginRate.toFixed(1) + '%';
+            document.getElementById('progressNet').textContent = netProfitRate.toFixed(1) + '%';
+
+            const analysisBox = document.getElementById('analysisBox');
+            let analysisText = '';
+            analysisBox.className = 'analysis-box';
+            
+            if (monthlyNet < 0) {
+                analysisBox.classList.add('danger');
+                analysisText = '⚠️ 적자 상태입니다. 원가 절감 또는 판매가 조정이 필요합니다.';
+            } else if (marginRate < 10) {
+                analysisBox.classList.add('warning');
+                analysisText = '⚠️ 마진율이 낮습니다. 비용 절감이나 판매량 증대를 고려해보세요.';
+            } else if (marginRate < 25) {
+                analysisBox.classList.add('success');
+                analysisText = '✅ 적정한 마진율입니다. 안정적인 수익 구조를 유지하고 있습니다.';
+            } else {
+                analysisBox.classList.add('success');
+                analysisText = '🎉 우수한 마진율입니다! 판매량을 늘려 수익을 극대화하세요.';
+            }
+
+            if (operatingEnabled && monthlyNet > 0 && unitMargin > 0) {
+                const breakEven = Math.ceil(monthlyFixed / unitMargin);
+                analysisText += `<br><br>📌 손익분기점: 월 <strong>${breakEven.toLocaleString()}개</strong> 판매 필요`;
+            }
+
+            document.getElementById('analysisText').innerHTML = analysisText;
+        }
+
+        function resetAll() {
+            document.getElementById('purchasePrice').value = 10000;
+            document.getElementById('sellingPrice').value = 15000;
+            document.getElementById('monthlyVolume').value = 100;
+            document.getElementById('shippingCost').value = 0;
+            document.getElementById('packagingCost').value = 0;
+            document.getElementById('cardFee').value = 3;
+            document.getElementById('discountRate').value = 0;
+            document.getElementById('rent').value = 0;
+            document.getElementById('labor').value = 0;
+            document.getElementById('utilities').value = 0;
+            document.getElementById('marketing').value = 0;
+
+            ['additionalCosts', 'operatingCosts', 'discountTax'].forEach(id => {
+                document.getElementById(id + 'Check').checked = false;
+                document.getElementById(id + 'Switch').classList.remove('active');
+                document.getElementById(id).classList.remove('active');
+            });
+
+            calculateAll();
+        }
+
+        function setTargetProfit(value) {
+            document.getElementById('targetMonthlyProfit').value = value;
+            calculateReverse();
+        }
+
+        function calculateReverse() {
+            const targetProfit = parseFloat(document.getElementById('targetMonthlyProfit').value) || 0;
+            const purchasePrice = parseFloat(document.getElementById('revPurchasePrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('revSellingPrice').value) || 0;
+            const additionalCost = parseFloat(document.getElementById('revAdditionalCost').value) || 0;
+            const fixedCost = parseFloat(document.getElementById('revFixedCost').value) || 0;
+
+            const totalCost = purchasePrice + additionalCost;
+            const unitMargin = sellingPrice - totalCost;
+            const marginRate = totalCost > 0 ? (unitMargin / totalCost) * 100 : 0;
+
+            let requiredVolume = 0;
+            let requiredRevenue = 0;
+            let dailyVolume = 0;
+
+            if (unitMargin > 0) {
+                requiredVolume = Math.ceil((targetProfit + fixedCost) / unitMargin);
+                requiredRevenue = requiredVolume * sellingPrice;
+                dailyVolume = Math.ceil(requiredVolume / 30);
+            }
+
+            document.getElementById('revRequiredVolume').textContent = requiredVolume.toLocaleString() + '개';
+            document.getElementById('revUnitMargin').textContent = formatCurrency(unitMargin);
+            document.getElementById('revMarginRate').textContent = marginRate.toFixed(1) + '%';
+            document.getElementById('revRequiredRevenue').textContent = formatCurrency(requiredRevenue);
+            document.getElementById('revDailyVolume').textContent = dailyVolume.toLocaleString() + '개';
+
+            let analysisText = '';
+            
+            if (unitMargin <= 0) {
+                analysisText = '⚠️ <strong>마진이 음수입니다.</strong> 판매가를 높이거나 원가를 낮춰야 합니다.';
+            } else if (dailyVolume > 100) {
+                analysisText = `⚠️ <strong>일 ${dailyVolume.toLocaleString()}개 판매 필요</strong> - 높은 판매량이 요구됩니다.<br><br>`;
+                analysisText += `💡 대안: 마진을 높이면 필요 판매량이 줄어듭니다.<br>`;
+                const altMargin = unitMargin * 1.5;
+                const altVolume = Math.ceil((targetProfit + fixedCost) / altMargin);
+                analysisText += `예) 개당 마진 ${formatCurrency(altMargin)}이면 월 ${altVolume.toLocaleString()}개로 달성 가능`;
+            } else if (dailyVolume > 50) {
+                analysisText = `📊 <strong>일 평균 ${dailyVolume}개 판매 필요</strong> - 도전적이지만 가능한 목표입니다.<br><br>`;
+                analysisText += `✅ 월 매출 ${formatCurrency(requiredRevenue)} 달성 시 목표 수익 확보`;
+            } else {
+                analysisText = `🎯 <strong>충분히 달성 가능한 목표입니다!</strong><br><br>`;
+                analysisText += `✅ 일 평균 ${dailyVolume}개만 판매하면 월 ${formatCurrency(targetProfit)} 수익 달성<br>`;
+                analysisText += `✅ 마진율 ${marginRate.toFixed(1)}%로 안정적인 수익 구조`;
+            }
+
+            document.getElementById('reverseAnalysisText').innerHTML = analysisText;
+        }
+
+        document.querySelectorAll('#targetMonthlyProfit, #revPurchasePrice, #revSellingPrice, #revAdditionalCost, #revFixedCost').forEach(el => {
+            el.addEventListener('input', calculateReverse);
+            el.addEventListener('change', calculateReverse);
+        });
+
+        function downloadExcel() {
+            const d = calculationData;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', '');
+            
+            const wb = XLSX.utils.book_new();
+            
+            // 색상 팔레트 정의
+            const colors = {
+                navy: "1E3A5F",
+                navyLight: "2D4A6F",
+                blue: "3498DB",
+                blueLight: "E8F4FD",
+                green: "27AE60",
+                greenLight: "E8F8F0",
+                greenDark: "1E8449",
+                orange: "E67E22",
+                orangeLight: "FEF5E7",
+                orangeDark: "D35400",
+                red: "E74C3C",
+                redLight: "FDEDEC",
+                redDark: "C0392B",
+                purple: "9B59B6",
+                purpleLight: "F5EEF8",
+                teal: "16A085",
+                tealLight: "E8F6F3",
+                gray: "7F8C8D",
+                grayLight: "F8F9F9",
+                white: "FFFFFF",
+                black: "2C3E50"
+            };
+            
+            // 테두리 스타일 함수
+            const border = (color) => ({
+                top: { style: "thin", color: { rgb: color } },
+                bottom: { style: "thin", color: { rgb: color } },
+                left: { style: "thin", color: { rgb: color } },
+                right: { style: "thin", color: { rgb: color } }
+            });
+            
+            const borderMedium = (color) => ({
+                top: { style: "medium", color: { rgb: color } },
+                bottom: { style: "medium", color: { rgb: color } },
+                left: { style: "medium", color: { rgb: color } },
+                right: { style: "medium", color: { rgb: color } }
+            });
+            
+            // 스타일 정의
+            const styles = {
+                // 타이틀
+                title: {
+                    font: { bold: true, sz: 20, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.navy } },
+                    alignment: { horizontal: "center", vertical: "center" }
+                },
+                date: {
+                    font: { sz: 11, color: { rgb: colors.gray } },
+                    alignment: { horizontal: "center", vertical: "center" }
+                },
+                
+                // 핵심 지표 섹션 (네이비)
+                metricSection: {
+                    font: { bold: true, sz: 13, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.navy } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                metricHeader: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.navyLight } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.navy)
+                },
+                metricProfit: {
+                    font: { bold: true, sz: 14, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.green } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: borderMedium(colors.greenDark)
+                },
+                metricLoss: {
+                    font: { bold: true, sz: 14, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.red } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: borderMedium(colors.redDark)
+                },
+                
+                // 기본 입력값 섹션 (블루)
+                inputSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.blue } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                inputHeader: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.blue } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.blue)
+                },
+                inputRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.blueLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.blue)
+                },
+                inputValue: {
+                    font: { sz: 10, color: { rgb: colors.blue } },
+                    fill: { fgColor: { rgb: colors.blueLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.blue)
+                },
+                
+                // 원가 분석 섹션 (오렌지)
+                costSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.orange } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                costHeader: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.orange } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.orange)
+                },
+                costRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.orangeLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.orange)
+                },
+                costValue: {
+                    font: { sz: 10, color: { rgb: colors.orangeDark } },
+                    fill: { fgColor: { rgb: colors.orangeLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.orange)
+                },
+                costTotal: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.orangeDark } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: borderMedium(colors.orangeDark)
+                },
+                costTotalValue: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.orangeDark } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: borderMedium(colors.orangeDark)
+                },
+                
+                // 판매 분석 섹션 (그린)
+                salesSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.green } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                salesHeader: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.green } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.green)
+                },
+                salesRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.greenLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.green)
+                },
+                salesValue: {
+                    font: { sz: 10, color: { rgb: colors.greenDark } },
+                    fill: { fgColor: { rgb: colors.greenLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.green)
+                },
+                salesTotal: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.greenDark } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: borderMedium(colors.greenDark)
+                },
+                salesTotalValue: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.greenDark } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: borderMedium(colors.greenDark)
+                },
+                
+                // 월간 수익 섹션 (퍼플)
+                revenueSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.purple } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                revenueHeader: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.purple } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.purple)
+                },
+                revenueRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.purpleLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.purple)
+                },
+                revenueValue: {
+                    font: { sz: 10, color: { rgb: colors.purple } },
+                    fill: { fgColor: { rgb: colors.purpleLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.purple)
+                },
+                
+                // 운영비용 섹션 (레드)
+                opexSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.red } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                opexHeader: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.red } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.red)
+                },
+                opexRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.redLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.red)
+                },
+                opexValue: {
+                    font: { sz: 10, color: { rgb: colors.redDark } },
+                    fill: { fgColor: { rgb: colors.redLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.red)
+                },
+                opexTotal: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.redDark } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: borderMedium(colors.redDark)
+                },
+                opexTotalValue: {
+                    font: { bold: true, sz: 11, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.redDark } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: borderMedium(colors.redDark)
+                },
+                
+                // 최종 수익 섹션 (티얼)
+                finalSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.teal } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                finalHeader: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.teal } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: border(colors.teal)
+                },
+                finalRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.tealLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.teal)
+                },
+                finalValue: {
+                    font: { sz: 10, color: { rgb: colors.teal } },
+                    fill: { fgColor: { rgb: colors.tealLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.teal)
+                },
+                finalProfit: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.green } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: borderMedium(colors.greenDark)
+                },
+                finalLoss: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.red } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: borderMedium(colors.redDark)
+                },
+                
+                // 손익분기점 섹션 (네이비)
+                bepSection: {
+                    font: { bold: true, sz: 12, color: { rgb: colors.white } },
+                    fill: { fgColor: { rgb: colors.navyLight } },
+                    alignment: { horizontal: "left", vertical: "center" }
+                },
+                bepRow: {
+                    font: { sz: 10, color: { rgb: colors.black } },
+                    fill: { fgColor: { rgb: colors.grayLight } },
+                    alignment: { horizontal: "left", vertical: "center" },
+                    border: border(colors.navy)
+                },
+                bepValue: {
+                    font: { bold: true, sz: 10, color: { rgb: colors.navy } },
+                    fill: { fgColor: { rgb: colors.grayLight } },
+                    alignment: { horizontal: "right", vertical: "center" },
+                    border: border(colors.navy)
+                },
+                
+                // 주의사항
+                note: {
+                    font: { sz: 9, color: { rgb: colors.gray }, italic: true },
+                    alignment: { horizontal: "left", vertical: "center" }
+                }
+            };
+            
+            // 손익분기점 계산
+            let breakEven = 0;
+            let breakEvenRevenue = 0;
+            if (d.unitMargin > 0 && d.monthlyFixed > 0) {
+                breakEven = Math.ceil(d.monthlyFixed / d.unitMargin);
+                breakEvenRevenue = breakEven * d.sellingPrice;
+            }
+
+            // 데이터 구성
+            const data = [
+                ['', '', '', '', ''],
+                ['', '마진계산기 분석 리포트', '', '', ''],
+                ['', '작성일: ' + dateStr, '', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '📊 핵심 지표', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '개당 마진', '마진율', '월 순이익', '연 순이익'],
+                ['', Math.round(d.unitMargin).toLocaleString() + ' 원', d.marginRate.toFixed(1) + ' %', Math.round(d.monthlyNet).toLocaleString() + ' 원', Math.round(d.yearlyProfit).toLocaleString() + ' 원'],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '📝 기본 입력값', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '항목', '금액', '', ''],
+                ['', '매입가 (원가)', Math.round(d.purchasePrice).toLocaleString() + ' 원', '', ''],
+                ['', '판매가', Math.round(d.sellingPrice).toLocaleString() + ' 원', '', ''],
+                ['', '월 판매량', Math.round(d.monthlyVolume).toLocaleString() + ' 개', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '💰 원가 분석', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '항목', '금액', '', ''],
+                ['', '매입가', Math.round(d.purchasePrice).toLocaleString() + ' 원', '', ''],
+                ['', '배송비', Math.round(d.shippingCost).toLocaleString() + ' 원', '', ''],
+                ['', '포장비', Math.round(d.packagingCost).toLocaleString() + ' 원', '', ''],
+                ['', '부가비용 소계', Math.round(d.additionalCost).toLocaleString() + ' 원', '', ''],
+                ['', '★ 총 원가', Math.round(d.totalCost).toLocaleString() + ' 원', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '📈 판매 분석', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '항목', '금액', '', ''],
+                ['', '판매가', Math.round(d.sellingPrice).toLocaleString() + ' 원', '', ''],
+                ['', '할인율', d.discountRate.toFixed(1) + ' %', '', ''],
+                ['', '부가세 포함', d.vatIncluded ? '예' : '아니오', '', ''],
+                ['', '실수령가', Math.round(d.actualSellingPrice).toLocaleString() + ' 원', '', ''],
+                ['', '카드수수료율', d.cardFeeRate.toFixed(1) + ' %', '', ''],
+                ['', '카드수수료', Math.round(d.cardFee).toLocaleString() + ' 원', '', ''],
+                ['', '★ 개당 순이익', Math.round(d.unitMargin).toLocaleString() + ' 원', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '🏢 월간 수익 분석', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '항목', '금액', '', ''],
+                ['', '월 매출', Math.round(d.monthlyRevenue).toLocaleString() + ' 원', '', ''],
+                ['', '월 원가', Math.round(d.monthlyCostTotal).toLocaleString() + ' 원', '', ''],
+                ['', '월 매출이익', Math.round(d.monthlyGross).toLocaleString() + ' 원', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '🏠 월 운영비용', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '항목', '금액', '', ''],
+                ['', '임대료', Math.round(d.rent).toLocaleString() + ' 원', '', ''],
+                ['', '인건비', Math.round(d.labor).toLocaleString() + ' 원', '', ''],
+                ['', '관리비', Math.round(d.utilities).toLocaleString() + ' 원', '', ''],
+                ['', '마케팅비', Math.round(d.marketing).toLocaleString() + ' 원', '', ''],
+                ['', '★ 고정비 합계', Math.round(d.monthlyFixed).toLocaleString() + ' 원', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '🎯 최종 수익', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '항목', '금액', '', ''],
+                ['', '★ 월 순이익', Math.round(d.monthlyNet).toLocaleString() + ' 원', '', ''],
+                ['', '★ 연 순이익', Math.round(d.yearlyProfit).toLocaleString() + ' 원', '', ''],
+                ['', '마진율 (원가대비)', d.marginRate.toFixed(1) + ' %', '', ''],
+                ['', '순이익률 (매출대비)', d.netProfitRate.toFixed(1) + ' %', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '📌 손익분기점 분석', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '손익분기 판매량', breakEven > 0 ? breakEven.toLocaleString() + ' 개/월' : '해당없음', '', ''],
+                ['', '손익분기 매출', breakEven > 0 ? Math.round(breakEvenRevenue).toLocaleString() + ' 원/월' : '해당없음', '', ''],
+                ['', '', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '※ 본 자료는 참고용이며, 실제 세금 계산은 세무사와 상담하시기 바랍니다.', '', '', ''],
+                ['', '', '', '', ''],
+                ['', '제작: 뉴리치에셋(주)', '', '', '']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            ws['!cols'] = [
+                { wch: 3 },
+                { wch: 22 },
+                { wch: 18 },
+                { wch: 18 },
+                { wch: 18 }
+            ];
+            
+            ws['!rows'] = [];
+            for (let i = 0; i < data.length; i++) {
+                ws['!rows'][i] = { hpt: 24 };
+            }
+            ws['!rows'][1] = { hpt: 40 };
+            ws['!rows'][8] = { hpt: 30 };
+            
+            // 스타일 적용
+            if (ws['B2']) ws['B2'].s = styles.title;
+            if (ws['B3']) ws['B3'].s = styles.date;
+            
+            // 핵심 지표 섹션
+            if (ws['B6']) ws['B6'].s = styles.metricSection;
+            ['B8', 'C8', 'D8', 'E8'].forEach(cell => {
+                if (ws[cell]) ws[cell].s = styles.metricHeader;
+            });
+            ['B9', 'C9', 'D9', 'E9'].forEach(cell => {
+                if (ws[cell]) ws[cell].s = d.monthlyNet >= 0 ? styles.metricProfit : styles.metricLoss;
+            });
+            
+            // 기본 입력값 섹션 (블루)
+            if (ws['B12']) ws['B12'].s = styles.inputSection;
+            if (ws['B14']) ws['B14'].s = styles.inputHeader;
+            if (ws['C14']) ws['C14'].s = styles.inputHeader;
+            for (let i = 15; i <= 17; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.inputRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.inputValue;
+            }
+            
+            // 원가 분석 섹션 (오렌지)
+            if (ws['B20']) ws['B20'].s = styles.costSection;
+            if (ws['B22']) ws['B22'].s = styles.costHeader;
+            if (ws['C22']) ws['C22'].s = styles.costHeader;
+            for (let i = 23; i <= 26; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.costRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.costValue;
+            }
+            if (ws['B27']) ws['B27'].s = styles.costTotal;
+            if (ws['C27']) ws['C27'].s = styles.costTotalValue;
+            
+            // 판매 분석 섹션 (그린)
+            if (ws['B30']) ws['B30'].s = styles.salesSection;
+            if (ws['B32']) ws['B32'].s = styles.salesHeader;
+            if (ws['C32']) ws['C32'].s = styles.salesHeader;
+            for (let i = 33; i <= 38; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.salesRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.salesValue;
+            }
+            if (ws['B39']) ws['B39'].s = styles.salesTotal;
+            if (ws['C39']) ws['C39'].s = styles.salesTotalValue;
+            
+            // 월간 수익 섹션 (퍼플)
+            if (ws['B42']) ws['B42'].s = styles.revenueSection;
+            if (ws['B44']) ws['B44'].s = styles.revenueHeader;
+            if (ws['C44']) ws['C44'].s = styles.revenueHeader;
+            for (let i = 45; i <= 47; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.revenueRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.revenueValue;
+            }
+            
+            // 운영비용 섹션 (레드)
+            if (ws['B50']) ws['B50'].s = styles.opexSection;
+            if (ws['B52']) ws['B52'].s = styles.opexHeader;
+            if (ws['C52']) ws['C52'].s = styles.opexHeader;
+            for (let i = 53; i <= 56; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.opexRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.opexValue;
+            }
+            if (ws['B57']) ws['B57'].s = styles.opexTotal;
+            if (ws['C57']) ws['C57'].s = styles.opexTotalValue;
+            
+            // 최종 수익 섹션 (티얼)
+            if (ws['B60']) ws['B60'].s = styles.finalSection;
+            if (ws['B62']) ws['B62'].s = styles.finalHeader;
+            if (ws['C62']) ws['C62'].s = styles.finalHeader;
+            // 월/연 순이익 강조
+            if (ws['B63']) ws['B63'].s = d.monthlyNet >= 0 ? styles.finalProfit : styles.finalLoss;
+            if (ws['C63']) ws['C63'].s = d.monthlyNet >= 0 ? styles.finalProfit : styles.finalLoss;
+            if (ws['B64']) ws['B64'].s = d.yearlyProfit >= 0 ? styles.finalProfit : styles.finalLoss;
+            if (ws['C64']) ws['C64'].s = d.yearlyProfit >= 0 ? styles.finalProfit : styles.finalLoss;
+            for (let i = 65; i <= 66; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.finalRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.finalValue;
+            }
+            
+            // 손익분기점 섹션
+            if (ws['B69']) ws['B69'].s = styles.bepSection;
+            for (let i = 71; i <= 72; i++) {
+                if (ws['B' + i]) ws['B' + i].s = styles.bepRow;
+                if (ws['C' + i]) ws['C' + i].s = styles.bepValue;
+            }
+            
+            // 주의사항
+            if (ws['B75']) ws['B75'].s = styles.note;
+            
+            // 제작사 정보
+            if (ws['B77']) ws['B77'].s = {
+                font: { sz: 10, color: { rgb: colors.navy }, bold: true },
+                alignment: { horizontal: "left", vertical: "center" }
+            };
+            
+            XLSX.utils.book_append_sheet(wb, ws, '마진분석 리포트');
+            XLSX.writeFile(wb, '마진계산기_' + dateStr + '.xlsx');
+        }
+    </script>
+</body>
+</html>
