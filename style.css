@@ -168,3 +168,255 @@ h1 {
         font-size: 1em;
     }
 }
+
+/* 사용설명서 스타일 */
+.manual-section {
+    margin-top: 48px;
+    text-align: left;
+}
+
+.section-title {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #1e3a5f;
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #1e3a5f;
+}
+
+.manual-card {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.manual-card:hover {
+    border-color: #1e3a5f;
+    box-shadow: 0 4px 16px rgba(30, 58, 95, 0.1);
+}
+
+.manual-card.warning {
+    border-color: #fbbf24;
+    background: #fffbeb;
+}
+
+.manual-card.faq {
+    border-color: #60a5fa;
+    background: #eff6ff;
+}
+
+.manual-title {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.manual-content {
+    color: #374151;
+    line-height: 1.7;
+}
+
+.manual-desc {
+    margin-bottom: 16px;
+    color: #6b7280;
+    font-size: 0.95em;
+}
+
+.manual-steps {
+    margin: 0;
+    padding-left: 24px;
+}
+
+.manual-steps li {
+    margin-bottom: 12px;
+    padding-left: 8px;
+}
+
+.manual-steps li:last-child {
+    margin-bottom: 0;
+}
+
+.manual-list {
+    margin: 0;
+    padding-left: 24px;
+}
+
+.manual-list li {
+    margin-bottom: 10px;
+    padding-left: 8px;
+}
+
+.manual-list li:last-child {
+    margin-bottom: 0;
+}
+
+code {
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #1e3a5f;
+}
+
+/* 계산 예시 박스 */
+.example-box {
+    background: #f8fafc;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.example-title {
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 16px;
+    font-size: 1em;
+}
+
+.example-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.example-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 8px;
+}
+
+.example-row.highlight {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+    color: white;
+    font-weight: 700;
+}
+
+.example-label {
+    font-size: 0.95em;
+}
+
+.example-value {
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.example-divider {
+    height: 2px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}
+
+/* 팁 박스 */
+.tip-box {
+    background: #ecfdf5;
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: start;
+}
+
+.tip-icon {
+    font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+.tip-content {
+    color: #065f46;
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+/* FAQ 스타일 */
+.faq-item {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #dbeafe;
+}
+
+.faq-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.faq-question {
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+.faq-answer {
+    color: #374151;
+    padding-left: 16px;
+    font-size: 0.95em;
+}
+
+/* 문의 박스 */
+.contact-box {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+    color: white;
+    text-align: center;
+    padding: 24px;
+    border-radius: 12px;
+    margin-top: 32px;
+}
+
+.contact-box p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.contact-box p:first-child {
+    font-size: 1.1em;
+    margin-bottom: 12px;
+}
+
+/* 반응형 - 사용설명서 */
+@media (max-width: 480px) {
+    .section-title {
+        font-size: 1.5em;
+    }
+
+    .manual-card {
+        padding: 20px;
+    }
+
+    .manual-title {
+        font-size: 1.1em;
+    }
+
+    .manual-steps,
+    .manual-list {
+        padding-left: 20px;
+    }
+
+    .example-box {
+        padding: 16px;
+    }
+
+    .tip-box {
+        padding: 14px;
+    }
+
+    .contact-box {
+        padding: 20px;
+    }
+}
